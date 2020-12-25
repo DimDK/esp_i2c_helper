@@ -36,34 +36,22 @@ SOFTWARE.
 static const char* TAG = "i2c_helper";
 static const uint8_t ACK_CHECK_EN = 1;
 
+#define I2C_MASTER_FREQ_HZ 100000                             /* 100kHz*/
+#define I2C_MASTER_TX_BUF_DISABLE 0                           /* I2C master doesn't need buffer */
+#define I2C_MASTER_RX_BUF_DISABLE 0                           /* I2C master doesn't need buffer */
+
 int32_t i2c_init(i2c_port_t port) {
     ESP_LOGI(TAG, "Starting I2C master at port %d.", port);
-
+    int i2c_master_port = I2C_NUM_0;
     i2c_config_t conf;
     conf.mode = I2C_MODE_MASTER;
-    conf.sda_pullup_en = GPIO_PULLUP_DISABLE;
-    conf.scl_pullup_en = GPIO_PULLUP_DISABLE;
-
-    if (I2C_NUM_0 == port) {
-        conf.sda_io_num = I2C_HELPER_MASTER_0_SDA;
-        conf.scl_io_num = I2C_HELPER_MASTER_0_SCL;
-        conf.master.clk_speed = I2C_HELPER_MASTER_0_FREQ_HZ;
-    } else {
-        conf.sda_io_num = I2C_HELPER_MASTER_1_SDA;
-        conf.scl_io_num = I2C_HELPER_MASTER_1_SCL;
-        conf.master.clk_speed = I2C_HELPER_MASTER_1_FREQ_HZ;
-    }
-
-    ESP_ERROR_CHECK(i2c_param_config(port, &conf));
-    ESP_ERROR_CHECK(
-        i2c_driver_install(
-            port,
-            conf.mode,
-            I2C_HELPER_MASTER_RX_BUF_LEN,
-            I2C_HELPER_MASTER_TX_BUF_LEN,
-            0
-        )
-    );
+    conf.sda_io_num = I2C_HELPER_MASTER_0_SDA;
+    conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
+    conf.scl_io_num = I2C_HELPER_MASTER_0_SCL;
+    conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
+    conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
+    if (i2c_driver_install(i2c_master_port, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0) == ESP_OK);
+    return i2c_param_config(i2c_master_port, &conf);
 
     return ESP_OK;
 }
